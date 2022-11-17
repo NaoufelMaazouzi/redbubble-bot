@@ -8,6 +8,8 @@ from bs4 import BeautifulSoup
 import asyncio
 import aiohttp
 from aiohttp.client import ClientSession
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 viablesNiches = []
@@ -22,10 +24,14 @@ def getUrls(driver, retry=False):
 
     cookiesBtn = driver.find_element(
         By.XPATH,
-        "//*[contains(@class, 'ch2-btn ch2-allow-all-btn ch2-btn-primary ch2-btn-text-xxs')]",
+        "//*[contains(@class, 'ch2-btn ch2-allow-all-btn ch2-btn-primary')]",
+        # "//*[contains(@class, 'ch2-btn ch2-allow-all-btn ch2-btn-primary ch2-btn-text-xxs')]",
     )
     cookiesBtn.click()
+    start = time.time()
     getAllUrls(driver)
+    end = time.time()
+    print(f"download links in {end - start} seconds")
 
 
 async def download_link(url: str, session: ClientSession):
@@ -50,7 +56,7 @@ async def download_link(url: str, session: ClientSession):
 
 
 async def download_all(urls: list):
-    my_conn = aiohttp.TCPConnector(limit=10)
+    my_conn = aiohttp.TCPConnector(limit=50)
     async with aiohttp.ClientSession(connector=my_conn) as session:
         tasks = []
         for url in urls:
@@ -61,15 +67,21 @@ async def download_all(urls: list):
 
 def getAllUrls(driver):
     for i in range(1, 10):
+        # try:
         print(i)
+        # urls = WebDriverWait(driver, 10).until(
+        #     EC.presence_of_all_elements_located(
+        #         (
+        #             By.XPATH,
+        #             "//*[contains(@class, '___SLink_1hgw7-red-team __noWrapText_1hgw7-red-team __color_1hgw7-red-team ___SText_ekhvk-red-team __color_ekhvk-red-team')]",
+        #         )
+        #     )
+        # )
         urls = driver.find_elements(
             By.XPATH,
             "//*[contains(@class, '___SLink_1hgw7-red-team __noWrapText_1hgw7-red-team __color_1hgw7-red-team ___SText_ekhvk-red-team __color_ekhvk-red-team')]",
         )
-        start = time.time()
         asyncio.run(download_all(urls))
-        end = time.time()
-        print(f"download links in {end - start} seconds")
         print(viablesNiches)
         nextPageBtn = driver.find_element(
             By.XPATH,
@@ -77,3 +89,5 @@ def getAllUrls(driver):
         )
         nextPageBtn.click()
         time.sleep(5)
+        # finally:
+        #     driver.quit()

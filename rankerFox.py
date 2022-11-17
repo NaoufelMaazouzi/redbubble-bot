@@ -9,6 +9,7 @@ from semrush import getUrls
 from utils import switchWindow
 
 options = Options()
+options.headless = True
 options.add_experimental_option("detach", True)
 options.add_experimental_option("excludeSwitches", ["enable-logging"])
 
@@ -24,7 +25,7 @@ def login():
     inputElement = driver.find_element(By.ID, "iump_login_username")
     inputElement.send_keys("naoufel_du_28@live.fr")
     inputElement = driver.find_element(By.ID, "iump_login_password")
-    inputElement.send_keys("newworld28")
+    inputElement.send_keys("123456")
     inputElement.submit()
     time.sleep(1)
     popUp = driver.find_element(
