@@ -9,6 +9,7 @@ import aiohttp
 from aiohttp.client import ClientSession
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from googleSheets import writeData
 
 # asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 viablesNiches = []
@@ -36,6 +37,8 @@ def getUrls(driver, retry=False):
     getAllUrls(driver)
     end = time.time()
     print(f"download links in {end - start} seconds")
+    print("Write new niches to Google Sheets")
+    writeData(viablesNiches)
 
 
 async def download_link(url: str, session: ClientSession):
