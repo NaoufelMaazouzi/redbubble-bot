@@ -1,5 +1,6 @@
 import time
 import re
+import os
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -9,13 +10,21 @@ from semrush import getUrls
 from utils import switchWindow
 
 options = Options()
-options.headless = True
 options.add_experimental_option("detach", True)
 options.add_experimental_option("excludeSwitches", ["enable-logging"])
-
+options.add_argument('--headless')
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
 driver = webdriver.Chrome(
     service=Service(ChromeDriverManager().install()), options=options
 )
+
+try:
+    EMAIL = os.environ["EMAIL"]
+    PASSWORD = os.environ["PASSWORD"]
+except KeyError:
+    EMAIL = "EMAIL not available!"
+    PASSWORD = "PASSWORD not available!"
 
 
 def login():
@@ -23,9 +32,9 @@ def login():
     driver.maximize_window()
 
     inputElement = driver.find_element(By.ID, "iump_login_username")
-    inputElement.send_keys("naoufel_du_28@live.fr")
+    inputElement.send_keys(EMAIL)
     inputElement = driver.find_element(By.ID, "iump_login_password")
-    inputElement.send_keys("123456")
+    inputElement.send_keys(PASSWORD)
     inputElement.submit()
     time.sleep(1)
     popUp = driver.find_element(
