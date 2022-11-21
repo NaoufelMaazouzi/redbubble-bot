@@ -26,12 +26,12 @@ def getUrls(driver, retry=False):
     )
     driver.get(newUrl)
 
-    cookiesBtn = driver.find_element(
-        By.XPATH,
-        "//*[contains(@class, 'ch2-btn ch2-allow-all-btn ch2-btn-primary')]",
-        # "//*[contains(@class, 'ch2-btn ch2-allow-all-btn ch2-btn-primary ch2-btn-text-xxs')]",
-    )
-    cookiesBtn.click()
+    # cookiesBtn = driver.find_element(
+    #     By.XPATH,
+    #     "//*[contains(@class, 'ch2-btn ch2-allow-all-btn ch2-btn-primary')]",
+    #     # "//*[contains(@class, 'ch2-btn ch2-allow-all-btn ch2-btn-primary ch2-btn-text-xxs')]",
+    # )
+    # cookiesBtn.click()
     start = time.time()
     getAllUrls(driver)
     end = time.time()
