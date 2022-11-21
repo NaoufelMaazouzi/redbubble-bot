@@ -2,7 +2,7 @@ name: run rankerfox.py
 
 on:
   schedule:
-    - cron: "*/5 * * * *" #runs every 5min
+    - cron: "*/4 * * * *" #runs every 5min
 
 jobs:
   build:
