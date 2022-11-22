@@ -89,7 +89,7 @@ async def download_all(urls: list):
 
 
 def getAllUrls(driver):
-    for i in range(1, 10):
+    for i in range(1, 100):
         try:
             print(i)
             urls = WebDriverWait(driver, 10).until(
