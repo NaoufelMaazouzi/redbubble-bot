@@ -17,8 +17,9 @@ sheet = workbook.sheet1
 
 valuesToWrite = []
 def writeData(data):
-    for key in data:
+    for index, key in enumerate(data):
         values = list(key.values())
+        print(f'Step {index}, find {values[0]} in sheets')
         if(not sheet.findall(values[0])):
             valuesToWrite.append([values[0], ",".join( values[1]), False])
     sheet.update(f'A{next_available_row(sheet)}', valuesToWrite)
