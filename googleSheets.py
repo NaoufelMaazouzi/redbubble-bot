@@ -17,16 +17,12 @@ sheet = workbook.sheet1
 
 valuesToWrite = []
 def writeData(data):
-    for index, key in enumerate(data):
+    for key in data:
         values = list(key.values())
-        print(f'Step {index}, find {values[0]} in sheets')
-        if(not sheet.findall(values[0])):
-            valuesToWrite.append([values[0], ",".join( values[1]), False])
+        valuesToWrite.append([values[0], ",".join( values[1]), False])
+    print(f'Add {len(valuesToWrite)} values in sheets')
     sheet.update(f'A{next_available_row(sheet)}', valuesToWrite)
 
-
-# for item in sheet.findall("kfc korea"):
-#     row = sheet.row_values(item.row)
-#     if(row and len(row) == 3):
-#         print('okkkk')
-
+def getAllNichesFromSheets():
+    list_of_lists = sheet.get_all_records()
+    return [o['Niches'] for o in list_of_lists]

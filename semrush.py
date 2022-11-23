@@ -9,13 +9,12 @@ import aiohttp
 from aiohttp.client import ClientSession
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from googleSheets import writeData
+from googleSheets import writeData, getAllNichesFromSheets
 
 # asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 viablesNiches = []
 
-
-def getUrls(driver, retry=False):
+def getUrls(driver):
     newUrl = driver.current_url.replace(
         "projects/",
         'analytics/organic/positions/?sortField=&sortDirection=desc&filter=%' +
@@ -41,54 +40,58 @@ def getUrls(driver, retry=False):
     writeData(viablesNiches)
 
 
-async def download_link(url: str, session: ClientSession):
-    hrefOfUrl = url.get_attribute("href")
-    isGoodUrl = re.findall(
-        "[^\/]+$",
-        hrefOfUrl,
-    )
-    if len(isGoodUrl) and isGoodUrl[0].count(".") <= 0:
-        async with session.get(hrefOfUrl) as response:
-            soup = BeautifulSoup(await response.text(), "html.parser")
-            spanResults = soup.find(
-                "span",
-                class_="styles__box--2Ufmy styles__text--23E5U styles__body--3StRc styles__muted--8wjeu",
-            ).get_text()
-            resultsParsed = spanResults.replace(",", "")
-            results = re.findall("[0-9]+", resultsParsed)[0]
+async def download_link(hrefOfUrl: str, result: str, session: ClientSession):
+    async with session.get(hrefOfUrl) as response:
+        soup = BeautifulSoup(await response.text(), "html.parser")
+        spanResults = soup.find(
+            "span",
+            class_="styles__box--2Ufmy styles__text--23E5U styles__body--3StRc styles__muted--8wjeu",
+        ).get_text()
+        resultsParsed = spanResults.replace(",", "")
+        results = re.findall("[0-9]+", resultsParsed)[0]
 
-            if results and int(results) <= 20:
-                keywords = hrefOfUrl.rsplit("/", 1)[-1]
-                keywords = keywords.replace("+", " ")
+        if results and int(results) <= 20:
+            # keywords = hrefOfUrl.rsplit("/", 1)[-1]
+            # keywords = keywords.replace("+", " ")
 
-                stopwords = ['t-shirts', 'shirts', 'stickers', 'prints', '-prints', 'art-prints', 'photographic-prints', 'posters', 'flag']
-                querywords = keywords.split()
+            
+            headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
+            data = {
+                "_token": f"ix7aSzt3DnV52ebZt2P1gTydRqRVuxrCkTNZHiJt&keyword={result}&token=03AEkXODBADrISxICX4JOj_m-WJlamqjn8MFwwqD9aRSt13PtyxYJysi9rmuCbXOharYi8oENmQbR3r2qQViZngCSMvdYe8CM1EZVDPIqjU3lUA3DG_re1pKe6yIqsd5PYYqEhf4SDKIrBn8TUiam_L8_Kf2-eMNWqAP87ydDAGMoZYQ9-2IzJ2DukVi-HhD2FvFynREW40CaFxxmOGtjsfMIBjzjuxK31VebpG0y_rA-2LhgkSnbm_9UW1gImejXz7tg3PyjMJq-nPC_WiZO9TtKrT-lPcjCrTDRooaYTFxGdTOidBOD0HmKPQJ_9Bdj4NIDckeMIdH4qXEE0Sq74EDgTOD1cOFAACBl9NLfpsFTMwZayVIRAiiyk-JHXa514gyGMj-XMpfo3PmUJl7WVKmdsNeLWnvHG1WV_tNkrJi9T3MYWY42A88MnITdFwTUn_NG2bjIFznVKGGUz7kCYzSiBWoWvApOhvali0z2x-bICJdi2bYuspyJGyp5MctjR2vg2PfqSXmEH8M9nhJ1-MEK1dFnvBR9HpU52tg2rocJG3Z-ast_s_SrsXmcsvgLwKyllhj3e-65iwitBuuDkPyB1Evv3HUvZbw&version=version_3"
+            }
+            responseTags = requests.post('https://www.topbubbleindex.com/generate-tag/get_generated_tag', headers=headers, json=data)
+            tags = responseTags.json()
+            if(tags.keys()):
+                firstTenTags = list(tags.keys())[:10]
+                viablesNiches.append({"niche": result, "tags": firstTenTags})
+            else:
+                viablesNiches.append({"niche": result, "tags": []})
 
-                resultwords  = [word for word in querywords if word.lower() not in stopwords]
-                result = ' '.join(resultwords)
-                headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
-                data = {
-                    "_token": f"ix7aSzt3DnV52ebZt2P1gTydRqRVuxrCkTNZHiJt&keyword={result}&token=03AEkXODBADrISxICX4JOj_m-WJlamqjn8MFwwqD9aRSt13PtyxYJysi9rmuCbXOharYi8oENmQbR3r2qQViZngCSMvdYe8CM1EZVDPIqjU3lUA3DG_re1pKe6yIqsd5PYYqEhf4SDKIrBn8TUiam_L8_Kf2-eMNWqAP87ydDAGMoZYQ9-2IzJ2DukVi-HhD2FvFynREW40CaFxxmOGtjsfMIBjzjuxK31VebpG0y_rA-2LhgkSnbm_9UW1gImejXz7tg3PyjMJq-nPC_WiZO9TtKrT-lPcjCrTDRooaYTFxGdTOidBOD0HmKPQJ_9Bdj4NIDckeMIdH4qXEE0Sq74EDgTOD1cOFAACBl9NLfpsFTMwZayVIRAiiyk-JHXa514gyGMj-XMpfo3PmUJl7WVKmdsNeLWnvHG1WV_tNkrJi9T3MYWY42A88MnITdFwTUn_NG2bjIFznVKGGUz7kCYzSiBWoWvApOhvali0z2x-bICJdi2bYuspyJGyp5MctjR2vg2PfqSXmEH8M9nhJ1-MEK1dFnvBR9HpU52tg2rocJG3Z-ast_s_SrsXmcsvgLwKyllhj3e-65iwitBuuDkPyB1Evv3HUvZbw&version=version_3"
-                }
-                responseTags = requests.post('https://www.topbubbleindex.com/generate-tag/get_generated_tag', headers=headers, json=data)
-                tags = responseTags.json()
-                if(tags.keys()):
-                    firstTenTags = list(tags.keys())[:10]
-                    viablesNiches.append({"niche": result, "tags": firstTenTags})
-                else:
-                    viablesNiches.append({"niche": result, "tags": []})
-
-async def download_all(urls: list):
+async def download_all(urls: list, allNichesInSheets: list):
     my_conn = aiohttp.TCPConnector(limit=30)
     async with aiohttp.ClientSession(connector=my_conn) as session:
         tasks = []
         for url in urls:
-            task = asyncio.ensure_future(download_link(url=url, session=session))
-            tasks.append(task)
+            hrefOfUrl = url.get_attribute("href")
+            tagFromUrl = re.findall(
+                "[^\/]+$",
+                hrefOfUrl,
+            )
+            tagFromUrl = tagFromUrl[0].replace("+", " ")
+            if tagFromUrl.count(".") <= 0:
+                stopwords = ['t-shirts', 'shirts', 'stickers', 'prints', '-prints', 'art-prints', 'photographic-prints', 'posters', 'flag']
+                querywords = tagFromUrl.split()
+
+                resultwords  = [word for word in querywords if word.lower() not in stopwords]
+                result = ' '.join(resultwords)
+                if allNichesInSheets.count(result) <= 0:
+                    task = asyncio.ensure_future(download_link(hrefOfUrl=hrefOfUrl, result=result, session=session))
+                    tasks.append(task)
         await asyncio.gather(*tasks, return_exceptions=True)
 
 
 def getAllUrls(driver):
+    allNichesInSheets = getAllNichesFromSheets()
     for i in range(1, 100):
         try:
             print(i)
@@ -100,7 +103,7 @@ def getAllUrls(driver):
                     )
                 )
             )
-            asyncio.run(download_all(urls))
+            asyncio.run(download_all(urls, allNichesInSheets))
             print(viablesNiches)
             nextPageBtn = driver.find_element(
                 By.XPATH,
