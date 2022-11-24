@@ -162,7 +162,7 @@ def getUrls(driver, retry=False):
     end = time.time()
     print(f"download links in {end - start} seconds")
     print("Write new niches to Google Sheets")
-    # writeData(viablesNiches)
+    writeData(viablesNiches)
 
 
 async def download_link(url: str, session: ClientSession):
