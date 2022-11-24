@@ -17,11 +17,9 @@ sheet = workbook.sheet1
 
 valuesToWrite = []
 def writeData(data):
-    allNichesInSheets = getAllNichesFromSheets()
     for key in data:
         values = list(key.values())
-        if allNichesInSheets.count(values[0]) <= 0:
-            valuesToWrite.append([values[0], ",".join( values[1]), False])
+        valuesToWrite.append([values[0], ",".join( values[1]), False])
     print(f'Add {len(valuesToWrite)} values in sheets')
     sheet.update(f'A{next_available_row(sheet)}', valuesToWrite)
 
