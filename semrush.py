@@ -49,6 +49,7 @@ async def download_link(hrefOfUrl: str, result: str, session: ClientSession):
         ).get_text()
         resultsParsed = spanResults.replace(",", "")
         results = re.findall("[0-9]+", resultsParsed)[0]
+        print(f'{results} results')
 
         if results and int(results) <= 20:
             # keywords = hrefOfUrl.rsplit("/", 1)[-1]
@@ -71,7 +72,9 @@ async def download_all(urls: list, allNichesInSheets: list):
     my_conn = aiohttp.TCPConnector(limit=30)
     async with aiohttp.ClientSession(connector=my_conn) as session:
         tasks = []
+        print("Before FOR LOOP")
         for url in urls:
+            print("start FOR LOOP !!")            
             hrefOfUrl = url.get_attribute("href")
             tagFromUrl = re.findall(
                 "[^\/]+$",
@@ -84,9 +87,12 @@ async def download_all(urls: list, allNichesInSheets: list):
 
                 resultwords  = [word for word in querywords if word.lower() not in stopwords]
                 result = ' '.join(resultwords)
+                print(result)
                 if allNichesInSheets.count(result) <= 0:
+                    print('Ok, Not in sheets !')
                     task = asyncio.ensure_future(download_link(hrefOfUrl=hrefOfUrl, result=result, session=session))
                     tasks.append(task)
+        print("Out of FOR LOOP !!")            
         await asyncio.gather(*tasks, return_exceptions=True)
 
 

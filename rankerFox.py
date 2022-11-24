@@ -42,6 +42,7 @@ def login():
         "cp_close_image-2-24066",
     )
     popUp.click()
+    print('Logged in rankerfox')
     openSemrush()
 
 
