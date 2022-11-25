@@ -244,19 +244,20 @@ def filterUrls(urls):
                 "[^\/]+$",
                 hrefOfUrl,
             )
-            tagFromUrl = tagFromUrl[0].replace("+", " ")
-            if tagFromUrl.count(".") <= 0:
-                stopwords = ['t-shirts', 'shirts', 'stickers', 'prints', '-prints', 'art-prints', 'photographic-prints', 'posters', 'flag']
-                querywords = tagFromUrl.split()
+            if len(tagFromUrl):
+                tagFromUrl = tagFromUrl[0].replace("+", " ")
+                if tagFromUrl.count(".") <= 0:
+                    stopwords = ['t-shirts', 'shirts', 'stickers', 'prints', '-prints', 'art-prints', 'photographic-prints', 'posters', 'flag']
+                    querywords = tagFromUrl.split()
 
-                resultwords  = [word for word in querywords if word.lower() not in stopwords]
-                result = ' '.join(resultwords)
-                if allNichesInSheets.count(result) <= 0:
-                    print(f'Good, {result} Not in sheets !')
-                    filteredNiches.append({"niche": result, "hrefOfUrl": hrefOfUrl})
-                else:
-                    print(f'Failed, {result} already in sheets !')
-        return filteredNiches
+                    resultwords  = [word for word in querywords if word.lower() not in stopwords]
+                    result = ' '.join(resultwords)
+                    if allNichesInSheets.count(result) <= 0:
+                        print(f'Good, {result} Not in sheets !')
+                        filteredNiches.append({"niche": result, "hrefOfUrl": hrefOfUrl})
+                    else:
+                        print(f'Failed, {result} already in sheets !')
+            return filteredNiches
     except Exception as e:
         print(f"ERROR IN filterUrls: {e}")
     
