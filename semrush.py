@@ -257,7 +257,7 @@ def filterUrls(urls):
                         filteredNiches.append({"niche": result, "hrefOfUrl": hrefOfUrl})
                     else:
                         print(f'Failed, {result} already in sheets !')
-            return filteredNiches
+        return filteredNiches
     except Exception as e:
         print(f"ERROR IN filterUrls: {e}")
     
