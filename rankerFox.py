@@ -60,7 +60,7 @@ def openSemrush():
             print(f"Link {index} don't work")
             driver.close()
 
-        elif index == 2:
+        else:
             getUrls(driver)
             break
 
