@@ -232,7 +232,6 @@ def getAllUrls(driver):
             nextPageBtn.click()
         except Exception as e:
             print(f"ERROR IN getAllUrls: {e}")
-            driver.quit()
 
 def filterUrls(urls):
     try:
