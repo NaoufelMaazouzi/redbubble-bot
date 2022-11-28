@@ -49,6 +49,7 @@ def login():
 def openSemrush():
     userSemrush = driver.find_elements(By.CSS_SELECTOR, "input[value*='User Semrush']")
     for index, i in enumerate(userSemrush):
+        print(f"Test semrush link {index}")
         switchWindow(driver, 0)
         i.submit()
         # time.sleep(5)
@@ -61,8 +62,10 @@ def openSemrush():
             driver.close()
 
         else:
-            getUrls(driver)
-            break
+            isFinished = getUrls(driver)
+            if isFinished:
+                break
+            print(f"Can't load urls from link {index}")
 
 
 login()

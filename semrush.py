@@ -134,6 +134,7 @@ from aiohttp.client import ClientSession
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from googleSheets import writeData, getAllNichesFromSheets
+from utils import goNextPage
 
 # asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 viablesNiches = []
@@ -159,11 +160,12 @@ def getUrls(driver, retry=False):
         # )
         # cookiesBtn.click()
         start = time.time()
-        getAllUrls(driver)
+        scriptResult = getAllUrls(driver)
         end = time.time()
         print(f"download links in {end - start} seconds")
         print("Write new niches to Google Sheets")
         writeData(viablesNiches)
+        return scriptResult
     except Exception as e:
         print(f"ERROR IN getUrls: {e}")
 
@@ -175,25 +177,27 @@ async def download_link(niche: str, hrefOfUrl:str, session: ClientSession):
             spanResults = soup.find(
                 "span",
                 class_="styles__box--2Ufmy styles__text--23E5U styles__body--3StRc styles__muted--8wjeu",
-            ).get_text()
-            resultsParsed = spanResults.replace(",", "")
-            results = re.findall("[0-9]+", resultsParsed)[0]
+            )
+            if spanResults:
+                spanResults = spanResults.get_text()
+                resultsParsed = spanResults.replace(",", "")
+                results = re.findall("[0-9]+", resultsParsed)[0]
 
-            if results and int(results) <= 20:
-                print(f"YEEESS, {niche} has less than 20 results ({results})")
-                headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
-                data = {
-                    "_token": f"ix7aSzt3DnV52ebZt2P1gTydRqRVuxrCkTNZHiJt&keyword={niche}&token=03AEkXODBADrISxICX4JOj_m-WJlamqjn8MFwwqD9aRSt13PtyxYJysi9rmuCbXOharYi8oENmQbR3r2qQViZngCSMvdYe8CM1EZVDPIqjU3lUA3DG_re1pKe6yIqsd5PYYqEhf4SDKIrBn8TUiam_L8_Kf2-eMNWqAP87ydDAGMoZYQ9-2IzJ2DukVi-HhD2FvFynREW40CaFxxmOGtjsfMIBjzjuxK31VebpG0y_rA-2LhgkSnbm_9UW1gImejXz7tg3PyjMJq-nPC_WiZO9TtKrT-lPcjCrTDRooaYTFxGdTOidBOD0HmKPQJ_9Bdj4NIDckeMIdH4qXEE0Sq74EDgTOD1cOFAACBl9NLfpsFTMwZayVIRAiiyk-JHXa514gyGMj-XMpfo3PmUJl7WVKmdsNeLWnvHG1WV_tNkrJi9T3MYWY42A88MnITdFwTUn_NG2bjIFznVKGGUz7kCYzSiBWoWvApOhvali0z2x-bICJdi2bYuspyJGyp5MctjR2vg2PfqSXmEH8M9nhJ1-MEK1dFnvBR9HpU52tg2rocJG3Z-ast_s_SrsXmcsvgLwKyllhj3e-65iwitBuuDkPyB1Evv3HUvZbw&version=version_3"
-                }
-                responseTags = requests.post('https://www.topbubbleindex.com/generate-tag/get_generated_tag', headers=headers, json=data)
-                tags = responseTags.json()
-                if(tags.keys()):
-                    firstTenTags = list(tags.keys())[:10]
-                    viablesNiches.append({"niche": niche, "tags": firstTenTags})
+                if results and int(results) <= 20:
+                    print(f"YEEESS, {niche} has less than 20 results ({results})")
+                    headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
+                    data = {
+                        "_token": f"ix7aSzt3DnV52ebZt2P1gTydRqRVuxrCkTNZHiJt&keyword={niche}&token=03AEkXODBADrISxICX4JOj_m-WJlamqjn8MFwwqD9aRSt13PtyxYJysi9rmuCbXOharYi8oENmQbR3r2qQViZngCSMvdYe8CM1EZVDPIqjU3lUA3DG_re1pKe6yIqsd5PYYqEhf4SDKIrBn8TUiam_L8_Kf2-eMNWqAP87ydDAGMoZYQ9-2IzJ2DukVi-HhD2FvFynREW40CaFxxmOGtjsfMIBjzjuxK31VebpG0y_rA-2LhgkSnbm_9UW1gImejXz7tg3PyjMJq-nPC_WiZO9TtKrT-lPcjCrTDRooaYTFxGdTOidBOD0HmKPQJ_9Bdj4NIDckeMIdH4qXEE0Sq74EDgTOD1cOFAACBl9NLfpsFTMwZayVIRAiiyk-JHXa514gyGMj-XMpfo3PmUJl7WVKmdsNeLWnvHG1WV_tNkrJi9T3MYWY42A88MnITdFwTUn_NG2bjIFznVKGGUz7kCYzSiBWoWvApOhvali0z2x-bICJdi2bYuspyJGyp5MctjR2vg2PfqSXmEH8M9nhJ1-MEK1dFnvBR9HpU52tg2rocJG3Z-ast_s_SrsXmcsvgLwKyllhj3e-65iwitBuuDkPyB1Evv3HUvZbw&version=version_3"
+                    }
+                    responseTags = requests.post('https://www.topbubbleindex.com/generate-tag/get_generated_tag', headers=headers, json=data)
+                    tags = responseTags.json()
+                    if(tags.keys()):
+                        firstTenTags = list(tags.keys())[:10]
+                        viablesNiches.append({"niche": niche, "tags": firstTenTags})
+                    else:
+                        viablesNiches.append({"niche": niche, "tags": []})
                 else:
-                    viablesNiches.append({"niche": niche, "tags": []})
-            else:
-                print(f"NOOOO, {niche} has more than 20 results ({results})")
+                    print(f"NOOOO, {niche} has more than 20 results ({results})")
     except Exception as e:
         print(f"ERROR IN download_link: {e}")
 
@@ -225,13 +229,12 @@ def getAllUrls(driver):
             )
             asyncio.run(download_all(urls))
             print(viablesNiches)
-            nextPageBtn = driver.find_element(
-                By.XPATH,
-                "//*[contains(@class, '___SNextPage_12i0x-red-team ___SButton_1c1ei-red-team _size_m_1c1ei-red-team _theme_primary-info_1c1ei-red-team')]",
-            )
-            nextPageBtn.click()
+            goNextPage(driver)
         except Exception as e:
-            print(f"ERROR IN getAllUrls: {e}")
+            print(f"ERROR IN getAllUrls: {e}, links can't be displayed on")
+            driver.close()
+            return False
+    return True
 
 def filterUrls(urls):
     try:

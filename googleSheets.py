@@ -21,7 +21,8 @@ def writeData(data):
         values = list(key.values())
         valuesToWrite.append([values[0], ",".join( values[1]), False])
     print(f'Add {len(valuesToWrite)} values in sheets')
-    sheet.update(f'A{next_available_row(sheet)}', valuesToWrite)
+    if len(valuesToWrite):
+        sheet.update(f'A{next_available_row(sheet)}', valuesToWrite)
 
 def getAllNichesFromSheets():
     list_of_lists = sheet.get_all_records()
