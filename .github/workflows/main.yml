@@ -6,6 +6,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    container:
+      image:  node:latest
 
     services:
       selenium:
