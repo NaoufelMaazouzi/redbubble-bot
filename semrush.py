@@ -130,6 +130,7 @@ import requests
 from bs4 import BeautifulSoup
 import asyncio
 import aiohttp
+import uuid
 from aiohttp.client import ClientSession
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -153,12 +154,6 @@ def getUrls(driver, retry=False):
         )
         driver.get(newUrl)
 
-        # cookiesBtn = driver.find_element(
-        #     By.XPATH,
-        #     "//*[contains(@class, 'ch2-btn ch2-allow-all-btn ch2-btn-primary')]",
-        #     # "//*[contains(@class, 'ch2-btn ch2-allow-all-btn ch2-btn-primary ch2-btn-text-xxs')]",
-        # )
-        # cookiesBtn.click()
         start = time.time()
         scriptResult = getAllUrls(driver)
         end = time.time()
@@ -170,9 +165,9 @@ def getUrls(driver, retry=False):
         print(f"ERROR IN getUrls: {e}")
 
 
-async def download_link(niche: str, hrefOfUrl:str, session: ClientSession):
+async def download_link(niche: str, url: str, session: ClientSession):
     try:
-        async with session.get(hrefOfUrl) as response:
+        async with session.get(url) as response:
             soup = BeautifulSoup(await response.text(), "html.parser")
             spanResults = soup.find(
                 "span",
@@ -201,14 +196,14 @@ async def download_link(niche: str, hrefOfUrl:str, session: ClientSession):
     except Exception as e:
         print(f"ERROR IN download_link: {e}")
 
-async def download_all(urls: list):
+async def download_all(allUrlsAndNames: list):
     try:
         my_conn = aiohttp.TCPConnector(limit=30)
         async with aiohttp.ClientSession(connector=my_conn) as session:
             tasks = []
-            filteredNiches = filterUrls(urls)
+            filteredNiches = filterUrls(allUrlsAndNames)
             for item in filteredNiches:
-                task = asyncio.ensure_future(download_link(niche=item["niche"], hrefOfUrl=item["hrefOfUrl"], session=session))
+                task = asyncio.ensure_future(download_link(niche=item["niche"], url=item["url"], session=session))
                 tasks.append(task)
             await asyncio.gather(*tasks, return_exceptions=True)
     except Exception as e:
@@ -216,49 +211,40 @@ async def download_all(urls: list):
 
 
 def getAllUrls(driver):
-    for i in range(1, 100):
-        try:
-            print(i)
-            urls = WebDriverWait(driver, 60).until(
-                EC.presence_of_all_elements_located(
-                    (
-                        By.XPATH,
-                        "//*[contains(@class, '___SLink_1hgw7-red-team __noWrapText_1hgw7-red-team __color_1hgw7-red-team ___SText_ekhvk-red-team __color_ekhvk-red-team')]",
-                    )
-                )
-            )
-            asyncio.run(download_all(urls))
-            print(viablesNiches)
-            goNextPage(driver)
-        except Exception as e:
-            print(f"ERROR IN getAllUrls: {e}, links can't be displayed on")
-            driver.close()
-            return False
+    try:
+        uniqueId = str(uuid.uuid4())
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36",
+            "Cookie": "sess=JiYkYrA96RKSwzHBMke4HO6mUwM%3D%231WGLYw%3D%3D%23WyIyMjE3Iiwid29yZHByZXNzX2xvZ2dlZF9pbl83OTIzOTRkMDRlYzQ5MWMxMzU1YTQxM2E4OWIzZWIxND1OYW91ZmVsfDE2NzAyNTE3MjR8QXRvQWk5YUZKUk8yaXlYQUNhZ0JhdGJwSG9BVWQ3Z0dGWXQ2RW1qSzFOSXwwNzJiZTQ2NTkwNGNjNDE4MjVmN2Y0NDM0ODM5ODhiY2VjNDRlNzI1ZjdmYzk0OTU1MWYyZGNkYjlmZmMzZmQxIiwiZDgyZDFlNTk1NiIsMF0%3D; wpInfo=eyJ1c2VyIjp7ImlkIjoiMjIxNyIsImlzQWRtaW4iOjAsInVzZXJuYW1lIjoiTmFvdWZlbCIsImFjY2Vzc0FibGUiOnRydWV9LCJzaXRlIjoiaHR0cHM6Ly9yYW5rZXJmb3guY29tIn0%3D; prefix=www; _gcl_au=1.1.184370741.1670079523; _ga=GA1.2.544701124.1670079509; _gid=GA1.2.1918957973.1670079523; __pdst=9403011cb694419591d84f33ccee4d8a; _mkto_trk=id:519-IIY-869&token:_mch-waveserver.click-1670079523544-31694; _rdt_uuid=1670079523590.50e1a321-9252-4ace-a699-44278e0b44dc; ln_or=d; sa-user-id=s%253A0-c21fa0cf-de9b-4ceb-7839-5482b357bb5e.N%252BjCxfEWxvPEIoyLQN0SmpOR0ufp16ZxlGm%252Bnw5%252BWTU; sa-user-id-v2=s%253AKLALKfN2QVBMfUg_9fmczVFBXTY.mzrBRCUBIrLVbeeIQNzetDY9K%252F5r0y31E913ycPfCI0; lux_uid=167007960650843053; _uetsid=fb0ac080731a11edaad12f0f83997bac; _uetvid=fb0b0680731a11edacc2813e1d42b834; _ga_HYWKMHR981=GS1.1.1670079509.1.1.1670080064.60.0.0; _ga_BPNLXP3JQG=GS1.1.1670079509.1.1.1670080064.60.0.0; csrftoken=xzPC9djEmRc3tAwTRIaiDd0Bh2GhgKkidCSTvtbdN75oZPKsfgYWsorkZg70HPNS; PHPSESSID=9a3c94ca9e872f99a336d6c5e73d57e5; SSO-JWT=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5YTNjOTRjYTllODcyZjk5YTMzNmQ2YzVlNzNkNTdlNSIsImlhdCI6MTY3MDA4MDkwMiwiaXNzIjoic3NvIiwidWlkIjoxMzM2NjkzNX0.5K2_fLnfdSd75NIaAd13B25fJbKaXMit2aaxBMh1XdM2ftbWYKZ559NlbCSFAIf7aGQDuD7_TonCz_jo04XeZw"
+        }
+        data = [{"id":2,"jsonrpc":"2.0","method":"organic.Positions","params":{"request_id":uniqueId,"report":"organic.positions","args":{"database":"us","dateType":"daily","searchItem":"redbubble.com","searchType":"domain","filter":{"keywordType":[{"sign":"-","value":3}],"volume":[{"sign":"+","operation":">","value":9},{"sign":"+","operation":"<","value":501}],"position":[{"sign":"+","operation":">","value":0},{"sign":"+","operation":"<","value":11}]},"display":{"order":{"field":"trafficPercent","direction":"desc"},"page":1,"pageSize":10000}},"userId":13366935,"apiKey":"58760c78547779461da66468052824e6"}},{"id":3,"jsonrpc":"2.0","method":"organic.PositionsTotal","params":{"request_id":uniqueId,"report":"organic.positions","args":{"database":"us","dateType":"daily","searchItem":"redbubble.com","searchType":"domain","filter":{"keywordType":[{"sign":"-","value":3}],"volume":[{"sign":"+","operation":">","value":9},{"sign":"+","operation":"<","value":501}],"position":[{"sign":"+","operation":">","value":0},{"sign":"+","operation":"<","value":11}]},"display":{"order":{"field":"trafficPercent","direction":"desc"},"page":1,"pageSize":10000}},"userId":13366935,"apiKey":"58760c78547779461da66468052824e6"}}]
+
+        response = requests.post('https://sem.waveserver.click/dpa/rpc', headers=headers, json=data)
+        response = response.json()
+        tuple_keys = ('url','phrase')
+        allUrlsAndNames = [{k: d[k] for k in tuple_keys if k in d} for d in response[0]['result']]
+        asyncio.run(download_all(allUrlsAndNames))
+        print(viablesNiches)
+    except Exception as e:
+        print(f"ERROR IN getAllUrls: {e}, links can't be displayed on")
+        driver.close()
+        return False
     return True
 
-def filterUrls(urls):
+def filterUrls(allUrlsAndNames):
     try:
         allNichesInSheets = getAllNichesFromSheets()
         filteredNiches = []
-        for url in urls:
-            hrefOfUrl = url.get_attribute("href")
-            tagFromUrl = re.findall(
-                "[^\/]+$",
-                hrefOfUrl,
-            )
-            if len(tagFromUrl):
-                tagFromUrl = tagFromUrl[0].replace("+", " ")
-                if tagFromUrl.count(".") <= 0:
-                    stopwords = ['t-shirts', 'shirts', 'stickers', 'prints', '-prints', 'art-prints', 'photographic-prints', 'posters', 'flag']
-                    querywords = tagFromUrl.split()
-
-                    resultwords  = [word for word in querywords if word.lower() not in stopwords]
-                    result = ' '.join(resultwords)
-                    if allNichesInSheets.count(result) <= 0:
-                        print(f'Good, {result} Not in sheets !')
-                        filteredNiches.append({"niche": result, "hrefOfUrl": hrefOfUrl})
-                    else:
-                        print(f'Failed, {result} already in sheets !')
+        for item in allUrlsAndNames:
+            querywords = item['phrase'].split() 
+            stopwords = ['t-shirts', 'shirts', 'stickers', 'prints', '-prints', 'art-prints', 'photographic-prints', 'posters', 'flag']
+            resultwords  = [word for word in querywords if word.lower() not in stopwords]
+            result = ' '.join(resultwords)
+            if allNichesInSheets.count(result) <= 0:
+                print(f'Good, {result} Not in sheets !')
+                filteredNiches.append({"niche": result, "url": item['url']})
+            else:
+                print(f'Failed, {result} already in sheets !')
         return filteredNiches
     except Exception as e:
         print(f"ERROR IN filterUrls: {e}")
