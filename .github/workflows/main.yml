@@ -2,7 +2,7 @@ name: run rankerfox.py
 
 on:
   schedule:
-    - cron: "0 */6 * * *" #runs every hour
+    - cron: "0 0 1 1 *" #runs every hour
 jobs:
   build:
     runs-on: ubuntu-latest
