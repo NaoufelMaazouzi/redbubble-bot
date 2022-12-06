@@ -7,21 +7,36 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    container:
+      image:  node:latest
+
+    services:
+      selenium:
+        image: selenium/standalone-chrome:latest
+        ports: 
+          - 4444:4444
+        options: --shm-size="4g"
+
 
     steps:
-      - name: checkout repo content
-        uses: actions/checkout@v2 # checkout the repository content to github runner.
-      - name: setup python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10' #install the python needed
-      - name: install python packages
-        run: |
-          python -m pip install --upgrade pip
-          pip install packaging
-          pip install -r requirements.txt
-      - name: execute py script # run the run.py to get the latest data
-        env:
+    - uses: actions/checkout@v2
+    - name: Get IP Address
+      run: echo "##[set-output name=ip;]$(ifconfig eth0 | grep 'inet [0-9\.]* ' -o | sed 's/[^0-9\.]//g')"
+      id: ip_addr 
+      
+    - name: Setup Pyhon
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: install python packages
+      run: |
+          sudo -H python -m pip install --upgrade pip
+          sudo -H pip install packaging
+          sudo -H pip install -r requirements.txt
+    - name: execute py script # run the run.py to get the latest data
+      env:
           EMAIL: ${{ secrets.EMAIL }}
           PASSWORD: ${{ secrets.PASSWORD }}
-        run: python rankerFox.py
+      run: python rankerFox.py --backend http://localhost:8080/ --frontend http://${{ steps.ip_addr.outputs.ip }}:4200 --selenium http://selenium:4444/wd/hub
