@@ -220,11 +220,12 @@ def getAllUrls(driver):
         data = [{"id":11,"jsonrpc":"2.0","method":"organic.Positions","params":{"request_id":uniqueId,"report":"organic.positions","args":{"database":"us","dateType":"daily","searchItem":"redbubble.com","searchType":"domain","filter":{"keywordType":[{"sign":"-","value":3}],"volume":[{"sign":"+","operation":">","value":9},{"sign":"+","operation":"<","value":501}],"position":[{"sign":"+","operation":">","value":0},{"sign":"+","operation":"<","value":11}]},"display":{"order":{"field":"trafficPercent","direction":"desc"},"page":1,"pageSize":10000}},"userId":13289797,"apiKey":"73030f50f9f245d9da3fc6cb36bccdbe"}},{"id":12,"jsonrpc":"2.0","method":"organic.PositionsTotal","params":{"request_id":uniqueId,"report":"organic.positions","args":{"database":"us","dateType":"daily","searchItem":"redbubble.com","searchType":"domain","filter":{"keywordType":[{"sign":"-","value":3}],"volume":[{"sign":"+","operation":">","value":9},{"sign":"+","operation":"<","value":501}],"position":[{"sign":"+","operation":">","value":0},{"sign":"+","operation":"<","value":11}]},"display":{"order":{"field":"trafficPercent","direction":"desc"},"page":1,"pageSize":10000}},"userId":13289797,"apiKey":"73030f50f9f245d9da3fc6cb36bccdbe"}}]
 
         response = requests.post('https://sem.waveserver.click/dpa/rpc', headers=headers, json=data)
-        response = response.json()
-        tuple_keys = ('url','phrase')
-        allUrlsAndNames = [{k: d[k] for k in tuple_keys if k in d} for d in response[0]['result']]
-        asyncio.run(download_all(allUrlsAndNames))
-        print(viablesNiches)
+        response = response.status_code
+        print(response)
+        # tuple_keys = ('url','phrase')
+        # allUrlsAndNames = [{k: d[k] for k in tuple_keys if k in d} for d in response[0]['result']]
+        # asyncio.run(download_all(allUrlsAndNames))
+        # print(viablesNiches)
     except Exception as e:
         print(f"ERROR IN getAllUrls: {e}, links can't be displayed on")
         driver.close()
