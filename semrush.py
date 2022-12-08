@@ -16,8 +16,10 @@ from ast import literal_eval
 
 # asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 viablesNiches = []
+paramsForRequest = False
 
 def getCookiesHeaders(driver):
+    global paramsForRequest
     for request in driver.requests:
             if request.response and request.url == "https://sem.waveserver.click/dpa/rpc" and request.response.status_code == 200:
                 cookie = request.headers['Cookie']
@@ -26,12 +28,18 @@ def getCookiesHeaders(driver):
                 data = data.decode("utf8")
                 bodyData = literal_eval(data)
                 isList = isinstance(bodyData, list)
-                if(isList):
-                    return { "bodyData": bodyData, "headers": { "userAgent": userAgent, "cookie": cookie } }
+                methods = ['organic.Positions', 'organic.PositionsTotal']
+                if(isList and methods.count(bodyData[0]["method"]) >= 1):
+                    uniqueId = str(uuid.uuid4())
+                    for item in bodyData:
+                        item["params"]["request_id"] = uniqueId
+                        item["params"]["args"]["display"]["pageSize"] = 10
+                    paramsForRequest = { "bodyData": bodyData, "headers": { "User-Agent": userAgent, "Cookie": cookie } }
 
 
 def getUrls(driver, retry=False):
     try:
+        global paramsForRequest
         newUrl = driver.current_url.replace(
             "projects/",
             'analytics/organic/positions/?sortField=&sortDirection=desc&filter=%' +
@@ -42,15 +50,22 @@ def getUrls(driver, retry=False):
             'bubble.com&searchType=domain',
         )
         driver.get(newUrl)
-        if data := getCookiesHeaders(driver):
-            start = time.time()
-            scriptResult = getAllUrls(driver, data)
-            end = time.time()
-            print(f"download links in {end - start} seconds")
-            print("Write new niches to Google Sheets")
-            writeData(viablesNiches)
-            return scriptResult
-        return False
+        start = time.time()
+        getCookiesHeaders(driver)
+        for index in range(1, 4):
+            if (paramsForRequest):
+                uniqueId = str(uuid.uuid4())
+                for item in paramsForRequest["bodyData"]:
+                    item["params"]["args"]["display"]["page"] = index
+                    item["params"]["request_id"] = uniqueId
+                scriptResult = getAllUrls(driver, paramsForRequest)
+                if(scriptResult == False):
+                    return False
+        end = time.time()
+        print(f"download links in {end - start} seconds")
+        print("Write new niches to Google Sheets")
+        writeData(viablesNiches)
+        return True
     except Exception as e:
         print(f"ERROR IN getUrls: {e}")
 
@@ -102,21 +117,14 @@ async def download_all(allUrlsAndNames: list):
 
 def getAllUrls(driver, data):
     try:
-        uniqueId = str(uuid.uuid4())
-        # headers = {
-        #     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
-        #     "Cookie": "_gcl_au=1.1.184370741.1670079523; _ga=GA1.2.544701124.1670079509; __pdst=9403011cb694419591d84f33ccee4d8a; _mkto_trk=id:519-IIY-869&token:_mch-waveserver.click-1670079523544-31694; _rdt_uuid=1670079523590.50e1a321-9252-4ace-a699-44278e0b44dc; sa-user-id=s%253A0-c21fa0cf-de9b-4ceb-7839-5482b357bb5e.N%252BjCxfEWxvPEIoyLQN0SmpOR0ufp16ZxlGm%252Bnw5%252BWTU; sa-user-id-v2=s%253AKLALKfN2QVBMfUg_9fmczVFBXTY.mzrBRCUBIrLVbeeIQNzetDY9K%252F5r0y31E913ycPfCI0; sess=1UCKQ0NXkIhIiBFfK7Pc6K4FTDA%3D%23a%2FqQYw%3D%3D%23WyIyMjE3Iiwid29yZHByZXNzX2xvZ2dlZF9pbl83OTIzOTRkMDRlYzQ5MWMxMzU1YTQxM2E4OWIzZWIxND1OYW91ZmVsfDE2NzA2MTg0MTZ8Z29mT3lTd3Z6RHlsTWZ5QzVEcDhBdXZRMFAxWGlucEQzVnhwSDZwVlJPZHxlMzJkOGVmNmZkZTM4MzIwZmNmZmFhMDhhZGQ5MTJiMzQyNDk5YzBmYTI0NGM5NGMwMzcyMDc5ZWM0M2EzNTZkIiwiYWQ5YWZiNTdlYyIsMF0%3D; wpInfo=eyJ1c2VyIjp7ImlkIjoiMjIxNyIsImlzQWRtaW4iOjAsInVzZXJuYW1lIjoiTmFvdWZlbCIsImFjY2Vzc0FibGUiOnRydWV9LCJzaXRlIjoiaHR0cHM6Ly9yYW5rZXJmb3guY29tIn0%3D; prefix=www; csrftoken=yMSwjPRImTarA0vs27a8wMmZLhaqds599wMkxXwV2TIuY2NzfsicSmmRYLJBfMUe; _gid=GA1.2.382303221.1670445727; _gat_UA-6197637-22=1; _uetsid=9e1b7820766f11edbee36b20ad9ad30a; _uetvid=fb0b0680731a11edacc2813e1d42b834; ln_or=d; _dc_gtm_UA-6197637-22=1; _ga_HYWKMHR981=GS1.1.1670445708.3.1.1670445745.42.0.0; PHPSESSID=adbf6fc9e1c010196aee682ccc787e86; SSO-JWT=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhZGJmNmZjOWUxYzAxMDE5NmFlZTY4MmNjYzc4N2U4NiIsImlhdCI6MTY3MDQ0NTc1MCwiaXNzIjoic3NvIiwidWlkIjoxMzM2NjkzNX0.HZ0z1KkE0YSlpYQjcfiQZoxrXCvdOelrtcbK8qVJ_9xn0WCgkat-UHVQ_uZ-sqUDzfyGGRooIKsn1ghb28CwKw; _ga_BPNLXP3JQG=GS1.1.1670445708.3.1.1670445771.16.0.0"
-        # }
-        # data = [{"id":11,"jsonrpc":"2.0","method":"organic.Positions","params":{"request_id":uniqueId,"report":"organic.positions","args":{"database":"us","dateType":"daily","searchItem":"redbubble.com","searchType":"domain","filter":{"keywordType":[{"sign":"-","value":3}],"volume":[{"sign":"+","operation":">","value":9},{"sign":"+","operation":"<","value":501}],"position":[{"sign":"+","operation":">","value":0},{"sign":"+","operation":"<","value":11}]},"display":{"order":{"field":"trafficPercent","direction":"desc"},"page":1,"pageSize":1000}},"userId":13289797,"apiKey":"73030f50f9f245d9da3fc6cb36bccdbe"}},{"id":12,"jsonrpc":"2.0","method":"organic.PositionsTotal","params":{"request_id":uniqueId,"report":"organic.positions","args":{"database":"us","dateType":"daily","searchItem":"redbubble.com","searchType":"domain","filter":{"keywordType":[{"sign":"-","value":3}],"volume":[{"sign":"+","operation":">","value":9},{"sign":"+","operation":"<","value":501}],"position":[{"sign":"+","operation":">","value":0},{"sign":"+","operation":"<","value":11}]},"display":{"order":{"field":"trafficPercent","direction":"desc"},"page":1,"pageSize":1000}},"userId":13289797,"apiKey":"73030f50f9f245d9da3fc6cb36bccdbe"}}]
-
         response = requests.post('https://sem.waveserver.click/dpa/rpc', headers=data["headers"], json=data["bodyData"])
         statusCode = response.status_code
-        print(statusCode)
-        # response = response.json()
-        # tuple_keys = ('url','phrase')
-        # allUrlsAndNames = [{k: d[k] for k in tuple_keys if k in d} for d in response[0]['result']]
-        # asyncio.run(download_all(allUrlsAndNames))
-        # print(viablesNiches)
+        print('StatusCode:', statusCode)
+        response = response.json()
+        tuple_keys = ('url','phrase')
+        allUrlsAndNames = [{k: d[k] for k in tuple_keys if k in d} for d in response[0]['result']]
+        asyncio.run(download_all(allUrlsAndNames))
+        print(viablesNiches)
     except Exception as e:
         print(f"ERROR IN getAllUrls: {e}, links can't be displayed on")
         driver.close()
