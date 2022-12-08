@@ -33,7 +33,7 @@ def getCookiesHeaders(driver):
                     uniqueId = str(uuid.uuid4())
                     for item in bodyData:
                         item["params"]["request_id"] = uniqueId
-                        item["params"]["args"]["display"]["pageSize"] = 10
+                        item["params"]["args"]["display"]["pageSize"] = 10000
                     paramsForRequest = { "bodyData": bodyData, "headers": { "User-Agent": userAgent, "Cookie": cookie } }
 
 
