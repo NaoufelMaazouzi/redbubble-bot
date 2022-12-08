@@ -30,9 +30,7 @@ def getCookiesHeaders(driver):
                 isList = isinstance(bodyData, list)
                 methods = ['organic.Positions', 'organic.PositionsTotal']
                 if(isList and methods.count(bodyData[0]["method"]) >= 1):
-                    uniqueId = str(uuid.uuid4())
                     for item in bodyData:
-                        item["params"]["request_id"] = uniqueId
                         item["params"]["args"]["display"]["pageSize"] = 10000
                     paramsForRequest = { "bodyData": bodyData, "headers": { "User-Agent": userAgent, "Cookie": cookie } }
 
